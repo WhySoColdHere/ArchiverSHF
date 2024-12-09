@@ -1,8 +1,9 @@
 from sys import argv, exit
-from PyQt5.QtWidgets import (QWidget, QApplication, QPushButton, QLabel, QFileDialog)
+from PyQt5.QtWidgets import (QWidget, QApplication, QPushButton, QLabel, QFileDialog, QSizePolicy)
 from PyQt5.QtGui import QPixmap
 from ScrollLabel import ScrollLabel
-from Archiver.Archiver import Archiver
+from Archiver.EncoderSHF import EncoderSHF
+from Archiver.DecoderSHF import DecoderSHF
 
 '''The program supports only 2 types of files: .txt and .bin'''
 
@@ -11,11 +12,11 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Archived")
+        self.setWindowTitle("Archiver")
         self._WIDTH, self._HEIGHT = 800, 660
         self.setFixedSize(self._WIDTH, self._HEIGHT)
 
-        self._background_image = QPixmap("images/bg.jpg")
+        self._background_image = QPixmap("images/bg_burned_better.png")
 
         self._background_label = QLabel(self)
         self._background_label.setPixmap(self._background_image)
@@ -48,9 +49,9 @@ class MainWindow(QWidget):
         self._scroll_labels_style_sheet = """
             QLabel {
                 background-color: transparent;
-                color: white;
+                color: rgb(255, 255, 255);
                 font-family: 'Lastri';
-                font-size: 20px
+                font-size: 20px;
             }
         """
         self._scroll_labels = {
@@ -58,24 +59,22 @@ class MainWindow(QWidget):
             ScrollLabel(self): {'x': 460, 'y': self._HEIGHT // 2 - 30}
         }
         self._input_file_scroll_label, self._output_file_scroll_label = self._scroll_labels
-        self._input_file_scroll_label.hide()
-        self._output_file_scroll_label.hide()
+        self._hide_widgets(*self._scroll_labels)
 
         self._labels_style_sheet = """            
             QLabel {
                 background-color: transparent;
                 color: white;
                 font-family: 'Lastri';
-                font-size: 10px
+                font-size: 20px
             }
         """
         self._labels = {
-            QLabel(self): {'x': 39, 'y': self._HEIGHT // 2 - 330},
-            QLabel(self): {'x': 460, 'y': self._HEIGHT // 2 - 330}
+            QLabel(self): {'x': 39, 'y': self._HEIGHT // 2 + 280},
+            QLabel(self): {'x': 460, 'y': self._HEIGHT // 2 + 280}
         }
-        self._original_file_size_label, self._processed_file_size_label = self._labels
-        self._original_file_size_label.hide()
-        self._processed_file_size_label.hide()
+        self._original_file_label, self._processed_file_label = self._labels
+        self._hide_widgets(*self._labels)
 
         self._customize_buttons()
         self._customize_scroll_labels()
@@ -85,28 +84,27 @@ class MainWindow(QWidget):
         filename, extend_filter = QFileDialog(self).getOpenFileName(parent=self, caption='Open file',
                                                                     filter='*.txt')
         if len(filename) == 0:
-            print("Alert! Filename doesn't exists")
+            print("Alert! File doesn't exists")
         else:
-            if self._input_file_label.isHidden():
-                self._show_scroll_labels()
+            if self._input_file_scroll_label.isHidden():
+                self._show_widgets(*self._scroll_labels, *self._labels)
 
-            data = Archiver.encode_shf(filename)
-            print(data)
-            # self._set_scroll_labels_text(*data[:2])
-            # self._set_labels_text(*data[2:])
+            encoder_shf = EncoderSHF(filename)
+            self._set_scroll_labels_text(encoder_shf.get_texts())
+            self._set_labels_text(encoder_shf.get_filenames(), encoder_shf.get_file_sizes())
 
     def _decode_button_on_click(self):
         filename, extend_filter = QFileDialog(self).getOpenFileName(parent=self, caption='Open file',
                                                                     filter='*.bin')
         if len(filename) == 0:
-            print("Alert! Filename doesn't exists")
+            print("Alert! File doesn't exists")
         else:
-            if self._input_file_label.isHidden():
-                self._show_labels()
+            if self._input_file_scroll_label.isHidden():
+                self._show_widgets(*self._scroll_labels, *self._labels)
 
-            data = Archiver.decode_shf(filename)
-            self._set_scroll_labels_text(*data[:2])
-            self._set_labels_text(*data[2:])
+            decoder_shf = DecoderSHF(filename)
+            self._set_scroll_labels_text(decoder_shf.get_texts())
+            self._set_labels_text(decoder_shf.get_filenames(), decoder_shf.get_file_sizes())
 
     def _get_buttons_settings(self, text, x, y, clicked):
         return {
@@ -116,15 +114,6 @@ class MainWindow(QWidget):
             'x': x, 'y': y,
             'clicked': clicked
         }
-
-    def _customize_labels(self):
-        for label in self._labels:
-            label.setStyleSheet(self._labels_style_sheet)
-            label.move(self._labels[label]['x'], self._labels[label]['y'])
-
-    def _set_labels_text(self, *texts):
-        for label, text in zip(self._labels, texts):
-            label.setText(text)
 
     def _customize_buttons(self):
         for button in self._buttons:
@@ -138,14 +127,37 @@ class MainWindow(QWidget):
             scroll_label.setStyleSheet_custom(self._scroll_labels_style_sheet)
             scroll_label.move(self._scroll_labels[scroll_label]['x'], self._scroll_labels[scroll_label]['y'])
 
-    def _show_scroll_labels(self):
-        for scroll_label, label in zip(self._scroll_labels, self._labels):
-            scroll_label.show()
-            label.show()
-
-    def _set_scroll_labels_text(self, *texts):
+    def _set_scroll_labels_text(self, texts):
         for scroll_label, text in zip(self._scroll_labels, texts):
             scroll_label.setText_custom(text)
+
+    def _customize_labels(self):
+        for label in self._labels:
+            label.resize(305, 20)
+            label.setStyleSheet(self._labels_style_sheet)
+            label.move(self._labels[label]['x'], self._labels[label]['y'])
+
+    def _set_labels_text(self, filenames, file_sizes):
+        for label, filename, file_size in zip(self._labels, filenames, file_sizes):
+            filename_border = 15
+
+            if len(filename) > filename_border:
+                filler = ' ... '
+                extension = '.' + filename.split('.')[-1]
+                filename = filename[: filename_border - len(extension) - len(filler)] + filler + extension
+
+            text = f"{filename} ----> {file_size}b"
+            label.setText(text)
+
+    @staticmethod
+    def _hide_widgets(*widgets):
+        for widget in widgets:
+            widget.hide()
+
+    @staticmethod
+    def _show_widgets(*widgets):
+        for widget in widgets:
+            widget.show()
 
 
 if __name__ == "__main__":

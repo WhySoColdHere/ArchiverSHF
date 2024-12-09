@@ -1,17 +1,24 @@
+from Archiver.Archiver import Archiver
 from os import path
 
 
-class DecodeSHF:
+class DecoderSHF(Archiver):
     def __init__(self, filename: str):
-        self._input_filename = filename
+        super().__init__(filename)
+
         self._output_filename = ''.join(self._input_filename.split('.')[:-1]) + "_decoded" + '.txt'
         self._encoded_text, self._decoded_text = self._decode_binary_file(self._input_filename)
 
         self._write_file(self._output_filename, self._decoded_text)
 
     def get_texts(self):
-        return (self._encoded_text, self._decoded_text,
-                path.getsize(self._input_filename), path.getsize(self._output_filename))
+        return self._encoded_text, self._decoded_text
+
+    def get_filenames(self):
+        return ''.join(self._input_filename.split('/')[-1]), ''.join(self._output_filename.split('/')[-1])
+
+    def get_file_sizes(self):
+        return path.getsize(self._input_filename), path.getsize(self._output_filename)
 
     @staticmethod
     def _decode_binary_file(filename):

@@ -1,9 +1,11 @@
+from Archiver.Archiver import Archiver
 from os import path
 
 
-class EncodeSHF:
+class EncoderSHF(Archiver):
     def __init__(self, filename: str):
-        self._input_filename = filename
+        super().__init__(filename)
+
         self._output_filename = ''.join(self._input_filename.split('.')[:-1]) + ".bin"
         self._original_text = self._get_text_from_file(self._input_filename)
         self._symbols_codes, self._encoded_text = self._encode_text()
@@ -11,8 +13,13 @@ class EncodeSHF:
         self._write_binary_file(self._output_filename, self._symbols_codes, self._encoded_text)
 
     def get_texts(self):
-        return (self._original_text, self._encoded_text,
-                path.getsize(self._input_filename), path.getsize(self._output_filename))
+        return self._original_text, self._encoded_text
+
+    def get_filenames(self):
+        return ''.join(self._input_filename.split('/')[-1]), ''.join(self._output_filename.split('/')[-1])
+
+    def get_file_sizes(self):
+        return path.getsize(self._input_filename), path.getsize(self._output_filename)
 
     def _shannon_fano(self, symbols):
         if len(symbols) == 1:

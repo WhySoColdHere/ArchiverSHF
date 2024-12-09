@@ -1,17 +1,12 @@
-from .EncodeSHF import EncodeSHF
-from .DecodeSHF import DecodeSHF
-
-
 class Archiver:
+    def __init__(self, filename):
+        self._input_filename = filename
 
-    @staticmethod
-    def encode_shf(filename):
-        encode_shf = EncodeSHF(filename)
-        return encode_shf.get_texts()
+    def get_texts(self):
+        pass
 
-    @staticmethod
-    def decode_shf(filename):
-        decode_shf = DecodeSHF(filename)
-        return decode_shf.get_texts()
+    def get_filenames(self):
+        pass
 
-
+    def get_file_sizes(self):
+        pass
