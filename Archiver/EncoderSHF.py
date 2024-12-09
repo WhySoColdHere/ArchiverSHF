@@ -49,7 +49,6 @@ class EncoderSHF(Archiver):
         return codes
 
     def _encode_text(self):
-        # Подсчитаем частоту символов
         freq = {}
         for char in self._original_text:
             if char in freq:
@@ -57,13 +56,8 @@ class EncoderSHF(Archiver):
             else:
                 freq[char] = 1
 
-        # Сортируем символы по убыванию частоты
         symbols = sorted(freq.items(), key=lambda x: x[1], reverse=True)
-
-        # Строим словарь кодов
         codes = self._shannon_fano(symbols)
-
-        # Кодируем текст
         encoded_text = ''.join(codes[char] for char in self._original_text)
 
         return codes, encoded_text
@@ -74,10 +68,8 @@ class EncoderSHF(Archiver):
             import json
             f.write(json.dumps(codes).encode() + b'\n')
 
-            # Запись длины закодированного текста
             f.write(len(encoded_text).to_bytes(4, byteorder='big'))
 
-            # Запись закодированного текста (улучшенная)
             num_bytes = (len(encoded_text) + 7) // 8
             binary_data = int(encoded_text, 2).to_bytes(num_bytes, byteorder='big')
             f.write(binary_data)

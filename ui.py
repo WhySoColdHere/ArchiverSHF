@@ -1,5 +1,5 @@
 from sys import argv, exit
-from PyQt5.QtWidgets import (QWidget, QApplication, QPushButton, QLabel, QFileDialog, QSizePolicy)
+from PyQt5.QtWidgets import (QWidget, QApplication, QPushButton, QLabel, QFileDialog)
 from PyQt5.QtGui import QPixmap
 from ScrollLabel import ScrollLabel
 from Archiver.EncoderSHF import EncoderSHF
@@ -83,28 +83,26 @@ class MainWindow(QWidget):
     def _encode_button_on_click(self):
         filename, extend_filter = QFileDialog(self).getOpenFileName(parent=self, caption='Open file',
                                                                     filter='*.txt')
-        if len(filename) == 0:
-            print("Alert! File doesn't exists")
-        else:
+        if len(filename):
             if self._input_file_scroll_label.isHidden():
                 self._show_widgets(*self._scroll_labels, *self._labels)
 
-            encoder_shf = EncoderSHF(filename)
-            self._set_scroll_labels_text(encoder_shf.get_texts())
-            self._set_labels_text(encoder_shf.get_filenames(), encoder_shf.get_file_sizes())
+            if not self._is_file_empty(filename, 'r'):
+                encoder_shf = EncoderSHF(filename)
+                self._set_scroll_labels_text(encoder_shf.get_texts())
+                self._set_labels_text(encoder_shf.get_filenames(), encoder_shf.get_file_sizes())
 
     def _decode_button_on_click(self):
         filename, extend_filter = QFileDialog(self).getOpenFileName(parent=self, caption='Open file',
                                                                     filter='*.bin')
-        if len(filename) == 0:
-            print("Alert! File doesn't exists")
-        else:
+        if len(filename):
             if self._input_file_scroll_label.isHidden():
                 self._show_widgets(*self._scroll_labels, *self._labels)
 
-            decoder_shf = DecoderSHF(filename)
-            self._set_scroll_labels_text(decoder_shf.get_texts())
-            self._set_labels_text(decoder_shf.get_filenames(), decoder_shf.get_file_sizes())
+            if not self._is_file_empty(filename, 'rb'):
+                decoder_shf = DecoderSHF(filename)
+                self._set_scroll_labels_text(decoder_shf.get_texts())
+                self._set_labels_text(decoder_shf.get_filenames(), decoder_shf.get_file_sizes())
 
     def _get_buttons_settings(self, text, x, y, clicked):
         return {
@@ -158,6 +156,11 @@ class MainWindow(QWidget):
     def _show_widgets(*widgets):
         for widget in widgets:
             widget.show()
+
+    @staticmethod
+    def _is_file_empty(filename, mode: str):
+        with open(filename, mode) as file:
+            return True if not len(file.read()) else False
 
 
 if __name__ == "__main__":

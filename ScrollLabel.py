@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QLabel
 from re import findall
 
 
-# class for scrollable label
 class ScrollLabel(QScrollArea):
 
     # constructor

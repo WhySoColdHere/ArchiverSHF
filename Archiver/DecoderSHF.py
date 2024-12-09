@@ -27,7 +27,6 @@ class DecoderSHF(Archiver):
             codes_json = f.readline().decode()
             codes = json.loads(codes_json)
 
-            # Чтение длины закодированного текста
             length_bytes = f.read(4)
             n = int.from_bytes(length_bytes, byteorder='big')
 
@@ -37,7 +36,7 @@ class DecoderSHF(Archiver):
 
             decoded_text = ""
             current_code = ""
-            reverse_codes = {code: symbol for symbol, code in codes.items()}  # Создаем обратный словарь
+            reverse_codes = {code: symbol for symbol, code in codes.items()}
 
             for bit in encoded_text:
                 current_code += bit
